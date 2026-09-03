@@ -370,15 +370,16 @@ function drawView(id, title, mode, h, D, H, v, k, kStd){
   c.strokeStyle='#8ecae6'; c.lineWidth=2; c.beginPath(); c.moveTo(0,yH); c.lineTo(W,yH); c.stroke(); c.lineWidth=1;
   c.fillStyle='#9fc5dd'; c.font='10.5px system-ui'; c.textAlign='left';
   if(hid>0) c.fillText('waterline at '+(hid/uF).toFixed(0)+' '+uN+' (solved k)', 14, Math.min(yH+13,Hc-20));
-  // where the waterline sits in standard air
-  const yS=Y(ang(hidStd));
-  c.strokeStyle = mode==='globe' ? '#ffd166' : '#ef476f';
-  c.setLineDash([5,4]); c.beginPath(); c.moveTo(0,yS); c.lineTo(W,yS); c.stroke(); c.setLineDash([]);
-  c.fillStyle=c.strokeStyle; c.font='10.5px system-ui'; c.textAlign='right';
-  const sLbl = mode!=='globe' ? 'straight light: nothing hidden'
-    : (hidStd>=H ? 'standard air (k = '+kStd+') hides the whole target'
-                 : 'waterline in standard air (k = '+kStd+'): '+(hidStd/uF).toFixed(0)+' '+uN);
-  c.fillText(sLbl, W-14, yS-4);
+  // where the waterline sits in standard air (globe only; on the flat plane straight light hides nothing)
+  if(mode==='globe'){
+    const yS=Y(ang(hidStd));
+    c.strokeStyle='#ffd166';
+    c.setLineDash([5,4]); c.beginPath(); c.moveTo(0,yS); c.lineTo(W,yS); c.stroke(); c.setLineDash([]);
+    c.fillStyle=c.strokeStyle; c.font='10.5px system-ui'; c.textAlign='right';
+    const sLbl = hidStd>=H ? 'standard air (k = '+kStd+') hides the whole target'
+                           : 'waterline in standard air (k = '+kStd+'): '+(hidStd/uF).toFixed(0)+' '+uN;
+    c.fillText(sLbl, W-14, yS-4);
+  }
   // titles + caption
   c.fillStyle='#cfd8dc'; c.font='600 12px system-ui'; c.textAlign='left';
   c.fillText(title, 12, 14);
