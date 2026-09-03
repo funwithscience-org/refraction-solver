@@ -123,6 +123,10 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
     <b>How it solves.</b> Hidden = target − visible. On the globe, k is found so that
     (D − √(2·R·h/(1−k)))² · (1−k)/2R equals the hidden height. On the flat plane, the same hiding must come
     entirely from ray curvature: the equal-hiding ray radius r gives k = −R/r (negative: light bending away from the surface).
+    Why negative is forced: a flat surface never curves away from the light, so a downward-bent ray (any k ≥ 0)
+    can always arc over and reach every point on the surface — standard refraction occludes nothing on a plane
+    (at worst it folds grazing images, superior-mirage style). Hiding on a plane can only come from rays bending
+    away from the surface.
     Temperature from k = 503·(P/T²)·(0.0343 + dT/dh) — Bislin's formulation; T in kelvin, P in millibars.
     This tool is inspired by, and runs in the opposite direction to, Walter Bislin's
     <a href="https://walter.bislins.ch/bloge/index.asp?page=Advanced+Earth+Curvature+Calculator" style="color:#8ecae6">Advanced Earth Curvature Calculator</a>
