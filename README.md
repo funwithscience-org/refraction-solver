@@ -27,6 +27,13 @@ Live at: https://funwithscience.net/refraction-solver/
 - Near-surface k is measured to swing far outside the survey band
   (Hirt et al., J. Geophys. Res. 2010).
 
+## Credit
+
+Inspired by Walter Bislin's Advanced Earth Curvature Calculator
+(https://walter.bislins.ch/bloge/index.asp?page=Advanced+Earth+Curvature+Calculator),
+the standard forward solver of the genre; this tool runs the same physics in
+the inverse direction, and borrows his k-to-temperature-gradient formulation.
+
 ## Notes
 
 Single self-contained HTML file (`docs/index.html`), no dependencies, no
