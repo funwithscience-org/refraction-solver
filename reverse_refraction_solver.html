@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reverse Refraction Solver</title>
+<style>
+:root{
+  --bg:#0f141a; --panel:#16202b; --line:#2b3a48; --ink:#cfd8dc; --dim:#8aa0ae;
+  --sky:#8ecae6; --gold:#ffd166; --flat:#ef476f; --band:#06d6a0; --water:#155a86;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.45 "Avenir Next","Segoe UI",system-ui,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:26px 20px 40px}
+h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
+.sub{color:var(--dim);font-size:13px;margin:4px 0 18px}
+.num{font-variant-numeric:tabular-nums}
+
+/* k-scale strip (the instrument) */
+#scale{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 8px 2px;margin-bottom:18px}
+#kcanvas{width:100%;height:150px;display:block}
+
+/* result ledgers */
+.ledgers{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:640px){.ledgers{grid-template-columns:1fr}}
+.ledger{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px 8px}
+.ledger h2{font-size:14px;font-weight:600;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.ledger.globe h2{color:var(--sky)} .ledger.flat h2{color:var(--flat)}
+.row{display:flex;justify-content:space-between;gap:10px;padding:4.5px 0;font-size:13.5px}
+.row .l{color:var(--dim)} .row .v{text-align:right;font-weight:600}
+.row .v.big{font-size:16px}
+.globe .v.big{color:var(--gold)} .flat .v.big{color:var(--flat)}
+.verdict{font-size:12.5px;color:var(--dim);border-top:1px dashed var(--line);margin-top:6px;padding:7px 0 3px}
+
+/* inputs */
+.inputs{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+.inputs h2{font-size:14px;font-weight:600;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}}
+.field label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:4px}
+.field .box{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:#10181f}
+.field input{flex:1;min-width:0;background:transparent;border:0;color:var(--gold);
+  font:600 16px/1 inherit;padding:9px 8px;text-align:right;outline:none}
+.field .unit{color:var(--dim);font-size:12px;align-self:center;padding-right:8px}
+.field button{background:#1d2a36;border:0;color:var(--ink);width:30px;cursor:pointer;font-size:15px}
+.field button:hover{background:#263746}
+.field button:focus-visible,.field input:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+.envrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:end}
+.envrow .field{width:130px}
+.preset{margin-left:auto}
+.preset button{background:#1d2a36;border:1px solid var(--line);color:var(--ink);border-radius:5px;
+  padding:8px 12px;font:600 13px inherit;cursor:pointer}
+.preset button:hover{background:#263746}
+.note{color:var(--dim);font-size:11.5px;line-height:1.55;margin-top:18px}
+.note b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Reverse refraction solver</h1>
+  <div class="sub">Enter what the camera saw. It solves what the air had to be doing — on a globe, and on a flat plane.</div>
+
+  <div id="scale"><canvas id="kcanvas"></canvas></div>
+
+  <div class="ledgers">
+    <div class="ledger globe">
+      <h2>Globe · R = 6371 km</h2>
+      <div class="row"><span class="l">hidden height</span><span class="v num" id="g_hid">–</span></div>
+      <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="g_k">–</span></div>
+      <div class="row"><span class="l">with visible ± range</span><span class="v num" id="g_krange">–</span></div>
+      <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="g_dt">–</span></div>
+      <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="g_temp">–</span></div>
+      <div class="verdict" id="g_note">–</div>
+    </div>
+    <div class="ledger flat">
+      <h2>Flat plane</h2>
+      <div class="row"><span class="l">hidden height to explain</span><span class="v num" id="f_hid">–</span></div>
+      <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="f_k">–</span></div>
+      <div class="row"><span class="l">with visible ± range</span><span class="v num" id="f_krange">–</span></div>
+      <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="f_dt">–</span></div>
+      <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="f_temp">–</span></div>
+      <div class="verdict" id="f_note">–</div>
+    </div>
+  </div>
+
+  <div class="inputs">
+    <h2>Observation</h2>
+    <div class="grid">
+      <div class="field"><label for="h">Observer height</label>
+        <div class="box"><button type="button" data-t="h" data-d="-1">−</button><input id="h" inputmode="decimal" value="0.15"><span class="unit">m</span><button type="button" data-t="h" data-d="1">+</button></div></div>
+      <div class="field"><label for="D">Target distance</label>
+        <div class="box"><button type="button" data-t="D" data-d="-1">−</button><input id="D" inputmode="decimal" value="58.9"><span class="unit">km</span><button type="button" data-t="D" data-d="1">+</button></div></div>
+      <div class="field"><label for="H">Target height</label>
+        <div class="box"><button type="button" data-t="H" data-d="-1">−</button><input id="H" inputmode="decimal" value="228"><span class="unit">m</span><button type="button" data-t="H" data-d="1">+</button></div></div>
+      <div class="field"><label for="v">Visible height</label>
+        <div class="box"><button type="button" data-t="v" data-d="-1">−</button><input id="v" inputmode="decimal" value="86"><span class="unit">m</span><button type="button" data-t="v" data-d="1">+</button></div></div>
+    </div>
+    <div class="envrow">
+      <div class="field"><label for="u">Visible ±</label>
+        <div class="box"><input id="u" inputmode="decimal" value="14"><span class="unit">m</span></div></div>
+      <div class="field"><label for="T">Surface air temp</label>
+        <div class="box"><input id="T" inputmode="decimal" value="30"><span class="unit">°C</span></div></div>
+      <div class="field"><label for="P">Pressure</label>
+        <div class="box"><input id="P" inputmode="decimal" value="1013"><span class="unit">mb</span></div></div>
+      <div class="preset"><button type="button" id="preset">Isla Tortuga video</button></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>How it solves.</b> Hidden = target − visible. On the globe, k is found so that
+    (D − √(2·R·h/(1−k)))² · (1−k)/2R equals the hidden height. On the flat plane, the same hiding must come
+    entirely from ray curvature: the equal-hiding ray radius r gives k = −R/r (negative: light bending away from the surface).
+    Temperature from k = 503·(P/T²)·(0.0343 + dT/dh) — Bislin's formulation; T in kelvin, P in millibars.
+    Reference bands: normal marine k 0.10–0.20 (Gauss survey standard 0.13; ISA sea-level lapse gives 0.17);
+    the hatched band is the k over the entered path equal to the 10–15′ horizon lifts Ives measured as a routine
+    midday condition on the Gulf of California (J. Franklin Inst. 252, 285–295, 1951) — it moves with distance.
+    Near-surface k is measured to swing far outside the survey band (Hirt et al., J. Geophys. Res. 2010).
+    The parabolic hiding formula is good to well under 1% at these distances; single-k is a whole-path average and the last
+    metre above the water can deviate from it (mirage layer).
+  </div>
+</div>
+
+<script>
+const R = 6371000, K1 = 503, G = 0.0343;
+
+function hiddenGlobe(h, D, k){
+  const Re = R/(1-k);
+  const d1 = Math.sqrt(2*Re*h);
+  if (d1 >= D) return 0;
+  return (D-d1)*(D-d1)/(2*Re);
+}
+function solveGlobeK(h, D, hid){           // hidden is monotone-decreasing in k
+  let lo=-6, hi=0.999;
+  if (hiddenGlobe(h,D,lo) < hid) return null;      // even huge inferior-mirage k can't hide this much
+  if (hid<=0) return {k: 1 - 2*R*h/(D*D), full:true}; // k at/above this ⇒ horizon beyond target: fully "unhidden"
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    (hiddenGlobe(h,D,mid) > hid) ? lo=mid : hi=mid;
+  }
+  return {k:(lo+hi)/2, full:false};
+}
+function hiddenFlat(h, D, r){              // upward-bending rays of radius r over a flat plane
+  const d1 = Math.sqrt(2*r*h);
+  if (d1 >= D) return 0;
+  return (D-d1)*(D-d1)/(2*r);
+}
+function solveFlatK(h, D, hid){
+  if (hid<=0) return {k:0, full:true};     // flat + straight light already shows everything
+  let lo=Math.log(1e5), hi=Math.log(1e9);  // r between 100 km and 1e6 km
+  if (hiddenFlat(h,D,Math.exp(lo)) < hid) return null;
+  for(let i=0;i<200;i++){
+    const mid=(lo+hi)/2;
+    (hiddenFlat(h,D,Math.exp(mid)) > hid) ? lo=mid : hi=mid;
+  }
+  return {k: -R/Math.exp((lo+hi)/2), full:false};
+}
+function dTdh(k, Tc, P){ const T=Tc+273.15; return k/(K1*P/(T*T)) - G; }
+
+function val(id){ return parseFloat(document.getElementById(id).value); }
+function fmt(x,d){ return isFinite(x) ? x.toFixed(d) : '–'; }
+
+function draw(kG, kGlo, kGhi, kF, kFlo, kFhi, D){
+  const cv=document.getElementById('kcanvas'), dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth, Hc=150;
+  cv.width=W*dpr; cv.height=Hc*dpr;
+  const c=cv.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,W,Hc);
+  const vals=[ -0.3, 0.6, kG, kF, kGlo, kGhi, kFlo, kFhi ].filter(x=>isFinite(x));
+  const ivesLo = (10/60)*(Math.PI/180)*2*R/D, ivesHi = (15/60)*(Math.PI/180)*2*R/D;
+  let kmin=Math.min(...vals)-0.08, kmax=Math.max(...vals, ivesHi)+0.08;
+  const X = k => 14 + (k-kmin)/(kmax-kmin)*(W-28);
+  const axisY = 118;
+  // bands
+  c.fillStyle='rgba(6,214,160,.22)'; c.fillRect(X(0.10),18,X(0.20)-X(0.10),axisY-18);
+  c.fillStyle='rgba(6,214,160,.10)';
+  for(let x=X(ivesLo); x<X(ivesHi); x+=7){ c.fillRect(x,18,3.5,axisY-18); }
+  c.strokeStyle='#2b3a48'; c.beginPath(); c.moveTo(10,axisY); c.lineTo(W-10,axisY); c.stroke();
+  // zero line
+  if (kmin<0 && kmax>0){ c.strokeStyle='#3a4c5c'; c.beginPath(); c.moveTo(X(0),18); c.lineTo(X(0),axisY); c.stroke(); }
+  // ticks
+  c.fillStyle='#8aa0ae'; c.font='11px system-ui'; c.textAlign='center';
+  const step = (kmax-kmin)>1.2 ? 0.2 : 0.1;
+  for(let k=Math.ceil(kmin/step)*step; k<=kmax; k+=step){
+    c.fillRect(X(k)-0.5,axisY,1,4); c.fillText(k.toFixed(1),X(k),axisY+16);
+  }
+  c.fillText('refraction coefficient k', W/2, axisY+30);
+  // band labels
+  c.fillStyle='#06d6a0'; c.textAlign='center'; c.font='11px system-ui';
+  c.fillText('normal marine 0.10–0.20', X(0.15), 14);
+  c.fillStyle='#8fe8c8';
+  c.fillText('Ives 1951 routine Gulf lifts (this distance)', (X(ivesLo)+X(ivesHi))/2, axisY-8);
+  // markers
+  function marker(k, lo, hi, y, col, label){
+    if(!isFinite(k)) return;
+    c.strokeStyle=col; c.lineWidth=2.5;
+    if(isFinite(lo)&&isFinite(hi)){ c.beginPath(); c.moveTo(X(lo),y); c.lineTo(X(hi),y); c.stroke();
+      [lo,hi].forEach(e=>{ c.beginPath(); c.moveTo(X(e),y-5); c.lineTo(X(e),y+5); c.stroke(); }); }
+    c.fillStyle=col; c.beginPath(); c.arc(X(k),y,5,0,7); c.fill();
+    c.font='600 12px system-ui'; c.textAlign='center'; c.fillText(label, X(k), y-11);
+    c.lineWidth=1;
+  }
+  marker(kG,kGlo,kGhi,46,'#ffd166','globe '+fmt(kG,2));
+  marker(kF,kFlo,kFhi,84,'#ef476f','flat '+fmt(kF,2));
+}
+
+function compute(){
+  const h=val('h'), D=val('D')*1000, H=val('H'), v=val('v'), u=Math.abs(val('u'))||0, Tc=val('T'), P=val('P');
+  if([h,D,H,v,Tc,P].some(x=>!isFinite(x)) || h<=0 || D<=0 || H<=0 || v<0){ return; }
+  const hid = H - v;
+  const set=(id,t)=>document.getElementById(id).textContent=t;
+
+  const g  = solveGlobeK(h,D,hid);
+  const gl = solveGlobeK(h,D,H-Math.min(H,v+u));
+  const gh = solveGlobeK(h,D,H-Math.max(0,v-u));
+  set('g_hid', fmt(hid,1)+' m  ('+fmt(hid*3.28084,0)+' ft)');
+  if(g===null){ set('g_k','impossible'); set('g_dt','–'); set('g_temp','–'); set('g_krange','–');
+    set('g_note','No k hides this much from this height on the globe — check the inputs.'); }
+  else{
+    const kG=g.k, dt=dTdh(kG,Tc,P);
+    set('g_k', (g.full?'≥ ':'')+fmt(kG,3));
+    set('g_krange', (gl&&gh)? fmt(gl.k,2)+' … '+fmt(gh.k,2) : '–');
+    set('g_dt', fmt(dt,4)+' °C/m');
+    set('g_temp', fmt(Tc+dt*H,1)+' °C  (surface '+fmt(Tc,0)+' °C)');
+    set('g_note', g.full ? 'Target fully visible: any k at or above this leaves nothing hidden.'
+      : (kG>=0.10&&kG<=0.20 ? 'Inside the normal marine band — ordinary air.'
+      : (kG>0.20 ? 'Above the survey band — looming / inversion territory. Compare the Ives band for this distance.'
+      : 'Below the survey band — inferior-mirage side.')));
+    var kGm=g.full?kG:kG, kGlo=gl?gl.k:NaN, kGhi=gh?gh.k:NaN;
+  }
+
+  const f  = solveFlatK(h,D,hid);
+  const fl = solveFlatK(h,D,H-Math.min(H,v+u));
+  const fh = solveFlatK(h,D,H-Math.max(0,v-u));
+  set('f_hid', fmt(hid,1)+' m');
+  if(f===null){ set('f_k','impossible'); set('f_dt','–'); set('f_temp','–'); set('f_krange','–');
+    set('f_note','Even extreme upward ray-bending cannot hide this much on a plane.'); }
+  else{
+    const kF=f.k, dtf=dTdh(kF,Tc,P);
+    set('f_k', f.full ? '0 (nothing to hide)' : fmt(kF,3));
+    set('f_krange', (fl&&fh&&!f.full)? fmt(fl.k,2)+' … '+fmt(fh.k,2) : '–');
+    set('f_dt', f.full ? '–' : fmt(dtf,4)+' °C/m');
+    set('f_temp', f.full ? '–' : fmt(Tc+dtf*H,1)+' °C  (surface '+fmt(Tc,0)+' °C)');
+    set('f_note', f.full ? 'A flat plane predicts the whole target visible — which is the claim being tested.'
+      : 'Light must bend away from the surface, path-averaged, for the whole distance — with the air at target-summit height as shown. Compare against the measured bands above.');
+    var kFm=kF, kFlo=fl&&!f.full?fl.k:NaN, kFhi=fh&&!f.full?fh.k:NaN;
+  }
+  draw(g&&!g.full?g.k:(g?g.k:NaN), typeof kGlo!=='undefined'?kGlo:NaN, typeof kGhi!=='undefined'?kGhi:NaN,
+       f&&!f.full?f.k:NaN, typeof kFlo!=='undefined'?kFlo:NaN, typeof kFhi!=='undefined'?kFhi:NaN, D);
+}
+
+document.querySelectorAll('input').forEach(el=>el.addEventListener('input',compute));
+document.querySelectorAll('button[data-t]').forEach(b=>b.addEventListener('click',()=>{
+  const el=document.getElementById(b.dataset.t);
+  const steps={h:0.05, D:0.5, H:5, v:5};
+  el.value=(parseFloat(el.value)+steps[b.dataset.t]*b.dataset.d).toPrecision(6).replace(/\.?0+$/,'');
+  compute();
+}));
+document.getElementById('preset').addEventListener('click',()=>{
+  const p={h:0.15,D:58.9,H:228,v:86,u:14,T:30,P:1013};
+  for(const k in p) document.getElementById(k).value=p[k];
+  compute();
+});
+window.addEventListener('resize',compute);
+compute();
+</script>
+</body>
+</html>
