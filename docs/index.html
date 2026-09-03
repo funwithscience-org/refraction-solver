@@ -77,7 +77,7 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
       <h2>Globe · R = 6371 km</h2>
       <div class="row"><span class="l">hidden height</span><span class="v num" id="g_hid">–</span></div>
       <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="g_k">–</span></div>
-      <div class="row"><span class="l">with visible ± range</span><span class="v num" id="g_krange">–</span></div>
+      <div class="row"><span class="l">k range from measurement ±</span><span class="v num" id="g_krange">–</span></div>
       <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="g_dt">–</span></div>
       <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="g_temp">–</span></div>
       <div class="verdict" id="g_note">–</div>
@@ -86,7 +86,7 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
       <h2>Flat plane</h2>
       <div class="row"><span class="l">hidden height to explain</span><span class="v num" id="f_hid">–</span></div>
       <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="f_k">–</span></div>
-      <div class="row"><span class="l">with visible ± range</span><span class="v num" id="f_krange">–</span></div>
+      <div class="row"><span class="l">k range from measurement ±</span><span class="v num" id="f_krange">–</span></div>
       <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="f_dt">–</span></div>
       <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="f_temp">–</span></div>
       <div class="verdict" id="f_note">–</div>
@@ -110,8 +110,8 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
         <div class="box"><button type="button" data-t="v" data-d="-1">−</button><input id="v" inputmode="decimal" value="86"><span class="unit" id="uv">m</span><button type="button" data-t="v" data-d="1">+</button></div></div>
     </div>
     <div class="envrow">
-      <div class="field"><label for="u">Visible ±</label>
-        <div class="box"><input id="u" inputmode="decimal" value="14"><span class="unit" id="uu">m</span></div></div>
+      <div class="field" style="width:190px"><label for="u" title="How precisely the visible height could be measured; the solver re-runs at visible ± this amount and reports the resulting k range on both models">Visible height, measurement ±</label>
+        <div class="box"><input id="u" inputmode="decimal" value="14" title="How precisely the visible height could be measured; propagated to a k range on both models"><span class="unit" id="uu">m</span></div></div>
       <div class="field"><label for="T">Surface air temp</label>
         <div class="box"><input id="T" inputmode="decimal" value="30"><span class="unit" id="uT">°C</span></div></div>
       <div class="field"><label for="P">Pressure</label>
@@ -145,7 +145,9 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
     effective values, not point measurements. The Ives band converts measured horizon lifts into the k giving the
     same angular lift over the entered path; it is an equivalence, not a direct k measurement. The temperature
     line assumes the entered pressure and temperature hold along the path. And the answer is only as good as the
-    visible-height input — measure it against surveyed target topography where possible.
+    visible-height input — measure it against surveyed target topography where possible. The measurement-± field
+    expresses that precision: the solver re-runs at visible ± that amount, and the whiskers on both markers and the
+    “k range” ledger rows show how far the answer moves.
   </div>
   <div class="note" style="margin-top:10px">
     <b>Why solve both columns.</b> On geometry alone, a flat plane with k&#8242; = k &minus; 1 is exactly degenerate
