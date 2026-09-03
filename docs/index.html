@@ -344,43 +344,46 @@ function drawView(id, title, mode, h, D, H, v, k, kStd){
   const W=cv.clientWidth, Hc=190; cv.width=W*dpr; cv.height=Hc*dpr;
   const c=cv.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,W,Hc);
   c.fillStyle='#10181f'; c.fillRect(0,0,W,Hc);
-  // apparent elevation angle of a point at height e, distance D, effective radius Re (rad)
   const ReOf = kk => mode==='globe' ? R/(1-kk) : (kk<-1e-9 ? -R/kk : Infinity);
-  const ang = (e,Re) => (e-h)/D - (isFinite(Re) ? D/(2*Re) : 0);
-  const horiz = Re => isFinite(Re) ? -Math.sqrt(Math.max(0,2*h/Re)) : -0; // apparent sea-horizon angle
-  const Re=ReOf(k), ReS=ReOf(kStd);
-  const aTop=ang(H,Re), aHor=Math.min(horiz(Re), ang(0,Re));
-  const aHorS=Math.min(horiz(ReS), ang(0,ReS));
-  const lo=Math.min(aHor,aHorS)-(aTop-aHor)*0.12, hi=aTop+(aTop-aHor)*0.30;
-  const Y=a => 26 + (hi-a)/(hi-lo)*(Hc-44);
-  // target block: centered slab
-  const x0=W*0.28, x1=W*0.72;
-  const yBase=Y(ang(0,Re)), yTop=Y(aTop);
+  const Re=ReOf(k);
+  // apparent elevation angle of a point at height e on the target (distance D)
+  const ang = e => (e-h)/D - (isFinite(Re) ? D/(2*Re) : 0);
+  const hid = Math.min(H, Math.max(0, H-v));                    // waterline height on target, solved
+  const hidStd = mode==='globe' ? Math.min(H*1.06, hiddenGlobe(h,D,kStd)) : 0;  // standard-air waterline
+  const aTop=ang(H), aBase=ang(0);
+  const lo=aBase-(aTop-aBase)*0.10, hi=aTop+(aTop-aBase)*0.30;
+  const Y=a => 24 + (hi-a)/(hi-lo)*(Hc-42);
+  // target slab
+  const x0=W*0.28, x1=W*0.72, yBase=Y(aBase), yTop=Y(aTop);
   c.fillStyle='#6b5138'; c.fillRect(x0,yTop,x1-x0,Math.max(1,yBase-yTop));
-  // elevation grid lines across full width
+  // elevation grid in display units
   const uF=lenF(), uN=lenU(), st=gridStep(H/uF);
   c.font='10px system-ui'; c.textAlign='left';
   for(let ed=0;ed<=H/uF+0.01;ed+=st){
-    const y=Y(ang(ed*uF,Re));
+    const y=Y(ang(ed*uF));
     c.strokeStyle='rgba(207,216,220,.22)'; c.beginPath(); c.moveTo(12,y); c.lineTo(W-12,y); c.stroke();
     c.fillStyle='rgba(207,216,220,.55)'; c.fillText(ed+' '+uN,14,y-2);
   }
-  // sea hides below solved horizon
-  const yH=Y(aHor);
+  // sea stands hid metres up the target (solved)
+  const yH=Y(ang(hid));
   c.fillStyle='rgba(21,90,134,.94)'; c.fillRect(0,yH,W,Hc-yH);
   c.strokeStyle='#8ecae6'; c.lineWidth=2; c.beginPath(); c.moveTo(0,yH); c.lineTo(W,yH); c.stroke(); c.lineWidth=1;
-  // standard-air horizon, dashed
-  const yHS=Y(aHorS);
+  c.fillStyle='#9fc5dd'; c.font='10.5px system-ui'; c.textAlign='left';
+  if(hid>0) c.fillText('waterline at '+(hid/uF).toFixed(0)+' '+uN+' (solved k)', 14, Math.min(yH+13,Hc-20));
+  // where the waterline sits in standard air
+  const yS=Y(ang(hidStd));
   c.strokeStyle = mode==='globe' ? '#ffd166' : '#ef476f';
-  c.setLineDash([5,4]); c.beginPath(); c.moveTo(0,yHS); c.lineTo(W,yHS); c.stroke(); c.setLineDash([]);
-  c.font='10.5px system-ui'; c.textAlign='right';
-  c.fillStyle=c.strokeStyle;
-  c.fillText(mode==='globe' ? 'horizon in standard air (k = 0.13)' : 'straight light: nothing hidden', W-14, yHS-4);
-  // titles + captions
+  c.setLineDash([5,4]); c.beginPath(); c.moveTo(0,yS); c.lineTo(W,yS); c.stroke(); c.setLineDash([]);
+  c.fillStyle=c.strokeStyle; c.font='10.5px system-ui'; c.textAlign='right';
+  const sLbl = mode!=='globe' ? 'straight light: nothing hidden'
+    : (hidStd>=H ? 'standard air (k = '+kStd+') hides the whole target'
+                 : 'waterline in standard air (k = '+kStd+'): '+(hidStd/uF).toFixed(0)+' '+uN);
+  c.fillText(sLbl, W-14, yS-4);
+  // titles + caption
   c.fillStyle='#cfd8dc'; c.font='600 12px system-ui'; c.textAlign='left';
   c.fillText(title, 12, 14);
   c.fillStyle='#8aa0ae'; c.font='10.5px system-ui';
-  const cap = isFinite(k) ? ('drawn at solved k = '+k.toFixed(2)+'  ·  visible '+v.toFixed(0)+' m of '+H.toFixed(0)+' m') : 'no solution';
+  const cap = isFinite(k) ? ('drawn at solved k = '+k.toFixed(2)+'  \u00b7  visible '+(v/uF).toFixed(0)+' of '+(H/uF).toFixed(0)+' '+uN) : 'no solution';
   c.fillText(cap, 12, Hc-6);
 }
 
