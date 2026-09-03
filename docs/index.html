@@ -49,6 +49,11 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
 .field button:focus-visible,.field input:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
 .envrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:end}
 .envrow .field{width:130px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-left:12px;vertical-align:middle}
+.seg button{background:#10181f;border:0;color:var(--dim);font:600 12.5px inherit;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#1d2a36;color:var(--gold)}
+.seg button:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;padding-right:2px;align-self:center;outline:none}
 .note{color:var(--dim);font-size:11.5px;line-height:1.55;margin-top:18px}
 .note b{color:var(--ink);font-weight:600}
 </style>
@@ -89,22 +94,26 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
   </div>
 
   <div class="inputs">
-    <h2>Observation</h2>
+    <h2 style="display:flex;align-items:center">Observation
+      <span class="seg" role="group" aria-label="Unit system">
+        <button type="button" id="sysM" aria-pressed="true">Metric</button>
+        <button type="button" id="sysI" aria-pressed="false">Imperial</button>
+      </span></h2>
     <div class="grid">
       <div class="field"><label for="h">Observer height</label>
-        <div class="box"><button type="button" data-t="h" data-d="-1">−</button><input id="h" inputmode="decimal" value="0.15"><span class="unit">m</span><button type="button" data-t="h" data-d="1">+</button></div></div>
+        <div class="box"><button type="button" data-t="h" data-d="-1">−</button><input id="h" inputmode="decimal" value="0.15"><span class="unit" id="uh">m</span><button type="button" data-t="h" data-d="1">+</button></div></div>
       <div class="field"><label for="D">Target distance</label>
-        <div class="box"><button type="button" data-t="D" data-d="-1">−</button><input id="D" inputmode="decimal" value="58.9"><span class="unit">km</span><button type="button" data-t="D" data-d="1">+</button></div></div>
+        <div class="box"><button type="button" data-t="D" data-d="-1">−</button><input id="D" inputmode="decimal" value="58.9"><select class="unit" id="uD" aria-label="Distance unit"><option value="km">km</option><option value="m">m</option></select><button type="button" data-t="D" data-d="1">+</button></div></div>
       <div class="field"><label for="H">Target height</label>
-        <div class="box"><button type="button" data-t="H" data-d="-1">−</button><input id="H" inputmode="decimal" value="228"><span class="unit">m</span><button type="button" data-t="H" data-d="1">+</button></div></div>
+        <div class="box"><button type="button" data-t="H" data-d="-1">−</button><input id="H" inputmode="decimal" value="228"><span class="unit" id="uH">m</span><button type="button" data-t="H" data-d="1">+</button></div></div>
       <div class="field"><label for="v">Visible height</label>
-        <div class="box"><button type="button" data-t="v" data-d="-1">−</button><input id="v" inputmode="decimal" value="86"><span class="unit">m</span><button type="button" data-t="v" data-d="1">+</button></div></div>
+        <div class="box"><button type="button" data-t="v" data-d="-1">−</button><input id="v" inputmode="decimal" value="86"><span class="unit" id="uv">m</span><button type="button" data-t="v" data-d="1">+</button></div></div>
     </div>
     <div class="envrow">
       <div class="field"><label for="u">Visible ±</label>
-        <div class="box"><input id="u" inputmode="decimal" value="14"><span class="unit">m</span></div></div>
+        <div class="box"><input id="u" inputmode="decimal" value="14"><span class="unit" id="uu">m</span></div></div>
       <div class="field"><label for="T">Surface air temp</label>
-        <div class="box"><input id="T" inputmode="decimal" value="30"><span class="unit">°C</span></div></div>
+        <div class="box"><input id="T" inputmode="decimal" value="30"><span class="unit" id="uT">°C</span></div></div>
       <div class="field"><label for="P">Pressure</label>
         <div class="box"><input id="P" inputmode="decimal" value="1013"><span class="unit">mb</span></div></div>
     </div>
@@ -185,7 +194,38 @@ function solveFlatK(h, D, hid){
 }
 function dTdh(k, Tc, P){ const T=Tc+273.15; return k/(K1*P/(T*T)) - G; }
 
+const FT=0.3048, MI=1609.344;
+const state={sys:'metric'};
+const distOpts={metric:[['km',1000],['m',1]], imperial:[['mi',MI],['ft',FT]]};
+function lenF(){ return state.sys==='metric'?1:FT; }
+function distF(){ const o=distOpts[state.sys]; const s=document.getElementById('uD').value;
+  for(const [n,f] of o) if(n===s) return f; return o[0][1]; }
+function lenU(){ return state.sys==='metric'?'m':'ft'; }
 function val(id){ return parseFloat(document.getElementById(id).value); }
+function readSI(){ return { h:val('h')*lenF(), D:val('D')*distF(), H:val('H')*lenF(),
+  v:val('v')*lenF(), u:(Math.abs(val('u'))||0)*lenF(),
+  Tc: state.sys==='metric'? val('T') : (val('T')-32)/1.8, P: val('P') }; }
+function setSystem(sys){
+  if(sys===state.sys) return;
+  const oldLen=lenF(), oldDist=distF(), oldSys=state.sys;
+  state.sys=sys;
+  const sel=document.getElementById('uD');
+  const keepIdx = sel.selectedIndex;
+  sel.innerHTML = distOpts[sys].map(o=>'<option value="'+o[0]+'">'+o[0]+'</option>').join('');
+  sel.selectedIndex = keepIdx;                     // km<->mi, m<->ft pairing
+  const nd = v => (+v.toPrecision(4)).toString();
+  ['h','H','v','u'].forEach(id=>{ const el=document.getElementById(id);
+    el.value = nd(parseFloat(el.value)*oldLen/lenF()); });
+  const D=document.getElementById('D');
+  D.value = nd(parseFloat(D.value)*oldDist/distF());
+  const T=document.getElementById('T');
+  T.value = nd(oldSys==='metric' ? parseFloat(T.value)*1.8+32 : (parseFloat(T.value)-32)/1.8);
+  ['uh','uH','uv','uu'].forEach(id=>document.getElementById(id).textContent=lenU());
+  document.getElementById('uT').textContent = sys==='metric'?'\u00b0C':'\u00b0F';
+  document.getElementById('sysM').setAttribute('aria-pressed', sys==='metric');
+  document.getElementById('sysI').setAttribute('aria-pressed', sys==='imperial');
+  compute();
+}
 function fmt(x,d){ return isFinite(x) ? x.toFixed(d) : '–'; }
 
 function draw(kG, kGlo, kGhi, kF, kFlo, kFhi, D){
@@ -238,7 +278,7 @@ function draw(kG, kGlo, kGhi, kF, kFlo, kFhi, D){
 }
 
 function compute(){
-  const h=val('h'), D=val('D')*1000, H=val('H'), v=val('v'), u=Math.abs(val('u'))||0, Tc=val('T'), P=val('P');
+  const {h,D,H,v,u,Tc,P}=readSI();
   if([h,D,H,v,Tc,P].some(x=>!isFinite(x)) || h<=0 || D<=0 || H<=0 || v<0){ return; }
   const hid = H - v;
   const set=(id,t)=>document.getElementById(id).textContent=t;
@@ -253,8 +293,8 @@ function compute(){
     const kG=g.k, dt=dTdh(kG,Tc,P);
     set('g_k', (g.full?'≥ ':'')+fmt(kG,3));
     set('g_krange', (gl&&gh)? fmt(gl.k,2)+' … '+fmt(gh.k,2) : '–');
-    set('g_dt', fmt(dt,4)+' °C/m');
-    set('g_temp', fmt(Tc+dt*H,1)+' °C  (surface '+fmt(Tc,0)+' °C)');
+    set('g_dt', fmt(dt,4)+' °C/m  ('+fmt(dt*0.54864,4)+' °F/ft)');
+    set('g_temp', fmt(Tc+dt*H,1)+' °C / '+fmt((Tc+dt*H)*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
     set('g_note', g.full ? 'Target fully visible: any k at or above this leaves nothing hidden.'
       : (kG>=0.10&&kG<=0.20 ? 'Inside the normal marine band — ordinary air.'
       : (kG>0.20 ? 'Above the survey band — looming / inversion territory. Compare the Ives band for this distance.'
@@ -272,8 +312,8 @@ function compute(){
     const kF=f.k, dtf=dTdh(kF,Tc,P);
     set('f_k', f.full ? '0 (nothing to hide)' : fmt(kF,3));
     set('f_krange', (fl&&fh&&!f.full)? fmt(fl.k,2)+' … '+fmt(fh.k,2) : '–');
-    set('f_dt', f.full ? '–' : fmt(dtf,4)+' °C/m');
-    set('f_temp', f.full ? '–' : fmt(Tc+dtf*H,1)+' °C  (surface '+fmt(Tc,0)+' °C)');
+    set('f_dt', f.full ? '–' : fmt(dtf,4)+' °C/m  ('+fmt(dtf*0.54864,4)+' °F/ft)');
+    set('f_temp', f.full ? '–' : fmt(Tc+dtf*H,1)+' °C / '+fmt((Tc+dtf*H)*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
     set('f_note', f.full ? 'A flat plane predicts the whole target visible — which is the claim being tested.'
       : 'Light must bend away from the surface, path-averaged, for the whole distance — with the air at target-summit height as shown. Compare against the measured bands above.');
     var kFm=kF, kFlo=fl&&!f.full?fl.k:NaN, kFhi=fh&&!f.full?fh.k:NaN;
@@ -285,14 +325,18 @@ function compute(){
 }
 
 document.querySelectorAll('input').forEach(el=>el.addEventListener('input',compute));
+document.getElementById('sysM').addEventListener('click',()=>setSystem('metric'));
+document.getElementById('sysI').addEventListener('click',()=>setSystem('imperial'));
+document.getElementById('uD').addEventListener('change',compute);
 document.querySelectorAll('button[data-t]').forEach(b=>b.addEventListener('click',()=>{
   const el=document.getElementById(b.dataset.t);
-  const steps={h:0.05, D:0.5, H:5, v:5};
-  el.value=(parseFloat(el.value)+steps[b.dataset.t]*b.dataset.d).toPrecision(6).replace(/\.?0+$/,'');
+  const metric=state.sys==='metric';
+  const steps={h:metric?0.05:0.2, D:document.getElementById('uD').value==='m'||document.getElementById('uD').value==='ft'?(metric?500:2000):0.5, H:metric?5:20, v:metric?5:20};
+  el.value=(+(parseFloat(el.value)+steps[b.dataset.t]*b.dataset.d).toPrecision(6)).toString();
   compute();
 }));
 
-function gridStep(H){ for(const s of [5,10,20,25,50,100,200]) if(H/s<=9) return s; return 500; }
+function gridStep(Hd){ for(const s of [5,10,20,25,50,100,200,500,1000]) if(Hd/s<=9) return s; return 2000; }
 function drawView(id, title, mode, h, D, H, v, k, kStd){
   const cv=document.getElementById(id), dpr=window.devicePixelRatio||1;
   const W=cv.clientWidth, Hc=190; cv.width=W*dpr; cv.height=Hc*dpr;
@@ -312,12 +356,12 @@ function drawView(id, title, mode, h, D, H, v, k, kStd){
   const yBase=Y(ang(0,Re)), yTop=Y(aTop);
   c.fillStyle='#6b5138'; c.fillRect(x0,yTop,x1-x0,Math.max(1,yBase-yTop));
   // elevation grid lines across full width
-  const st=gridStep(H);
+  const uF=lenF(), uN=lenU(), st=gridStep(H/uF);
   c.font='10px system-ui'; c.textAlign='left';
-  for(let e=0;e<=H+0.01;e+=st){
-    const y=Y(ang(e,Re));
+  for(let ed=0;ed<=H/uF+0.01;ed+=st){
+    const y=Y(ang(ed*uF,Re));
     c.strokeStyle='rgba(207,216,220,.22)'; c.beginPath(); c.moveTo(12,y); c.lineTo(W-12,y); c.stroke();
-    c.fillStyle='rgba(207,216,220,.55)'; c.fillText(e+' m',14,y-2);
+    c.fillStyle='rgba(207,216,220,.55)'; c.fillText(ed+' '+uN,14,y-2);
   }
   // sea hides below solved horizon
   const yH=Y(aHor);
