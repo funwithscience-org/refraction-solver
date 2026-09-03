@@ -18,17 +18,21 @@ Live at: https://funwithscience.net/refraction-solver/
 
 - Normal marine k = 0.10–0.20, with ticks at 0.13 (Gauss survey standard)
   and 0.17 (ISA sea-level lapse).
-- The hatched band converts the 10–15 arcminute false-sea-horizon lifts that
-  R. L. Ives documented as "a standard midday condition" on the Gulf of
-  California (J. Franklin Institute 252, 285–295, 1951) into the k producing
-  the same angular lift over the entered path — it moves with distance.
+- Indicative regime bands above the survey range: minor looming 0.20–0.35,
+  major looming 0.35–0.60, duct / Fata Morgana above ~0.60 (k = 1: light
+  follows the surface). The upper regimes are documented as locally routine
+  in some waters — Ives measured 10–15 arcminute false-sea-horizon lifts as
+  "a standard midday condition" on the Gulf of California (J. Franklin
+  Institute 252, 285–295, 1951), equivalent to k ≈ 0.6–0.95 over ~55 km.
 - Near-surface k is measured to swing far outside the survey band
   (Hirt et al., J. Geophys. Res. 2010).
 
 ## Notes
 
 Single self-contained HTML file (`docs/index.html`), no dependencies, no
-network calls. The "visible ±" field propagates measurement uncertainty into
+network calls. Below the scale, two eye-view panels draw the scene each model
+must produce — target slab, elevation grid lines, and the sea horizon at the
+solved k — with a dashed line marking that model's standard-air horizon. The "visible ±" field propagates measurement uncertainty into
 a k range on both branches. Known limits are stated in the page footer:
 single-k is a whole-path average and cannot model layered ducts or the
 mirage skin in the last metre above the water.

@@ -23,7 +23,7 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
 
 /* result ledgers */
 .ledgers{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-@media(max-width:640px){.ledgers{grid-template-columns:1fr}}
+@media(max-width:640px){.ledgers{grid-template-columns:1fr}#views{grid-template-columns:1fr}}
 .ledger{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px 8px}
 .ledger h2{font-size:14px;font-weight:600;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .ledger.globe h2{color:var(--sky)} .ledger.flat h2{color:var(--flat)}
@@ -62,6 +62,13 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
   <div class="sub">Enter what the camera saw. It solves what the air had to be doing — on a globe, and on a flat plane.</div>
 
   <div id="scale"><canvas id="kcanvas"></canvas></div>
+
+  <div id="views" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px">
+      <canvas id="viewG" style="width:100%;height:190px;display:block"></canvas></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px">
+      <canvas id="viewF" style="width:100%;height:190px;display:block"></canvas></div>
+  </div>
 
   <div class="ledgers">
     <div class="ledger globe">
@@ -112,9 +119,12 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
     (D − √(2·R·h/(1−k)))² · (1−k)/2R equals the hidden height. On the flat plane, the same hiding must come
     entirely from ray curvature: the equal-hiding ray radius r gives k = −R/r (negative: light bending away from the surface).
     Temperature from k = 503·(P/T²)·(0.0343 + dT/dh) — Bislin's formulation; T in kelvin, P in millibars.
-    Reference bands: normal marine k 0.10–0.20 (Gauss survey standard 0.13; ISA sea-level lapse gives 0.17);
-    the hatched band is the k over the entered path equal to the 10–15′ horizon lifts Ives measured as a routine
-    midday condition on the Gulf of California (J. Franklin Inst. 252, 285–295, 1951) — it moves with distance.
+    Regime bands on the scale are indicative descriptors, not sharp physical lines: normal marine k 0.10–0.20
+    (Gauss survey standard 0.13; ISA sea-level lapse gives 0.17), minor looming 0.20–0.35, major looming 0.35–0.60,
+    and duct / Fata Morgana above ≈0.60 (at k = 1 light follows the surface and the horizon is unlimited).
+    The upper regimes are documented as locally routine: Ives measured 10–15′ false-sea-horizon lifts as
+    "a standard midday condition" on the Gulf of California (J. Franklin Inst. 252, 285–295, 1951) —
+    equivalent to k ≈ 0.6–0.95 over a ~55 km path.
     Near-surface k is measured to swing far outside the survey band (Hirt et al., J. Geophys. Res. 2010).
     The parabolic hiding formula is good to well under 1% at these distances; single-k is a whole-path average and the last
     metre above the water can deviate from it (mirage layer).
@@ -183,15 +193,26 @@ function draw(kG, kGlo, kGhi, kF, kFlo, kFhi, D){
   const W=cv.clientWidth, Hc=150;
   cv.width=W*dpr; cv.height=Hc*dpr;
   const c=cv.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,W,Hc);
-  const vals=[ -0.3, 0.6, kG, kF, kGlo, kGhi, kFlo, kFhi ].filter(x=>isFinite(x));
-  const ivesLo = (10/60)*(Math.PI/180)*2*R/D, ivesHi = (15/60)*(Math.PI/180)*2*R/D;
-  let kmin=Math.min(...vals)-0.08, kmax=Math.max(...vals, ivesHi)+0.08;
+  const vals=[ -0.3, 0.75, kG, kF, kGlo, kGhi, kFlo, kFhi ].filter(x=>isFinite(x));
+  let kmin=Math.min(...vals)-0.08, kmax=Math.max(...vals)+0.08;
   const X = k => 14 + (k-kmin)/(kmax-kmin)*(W-28);
   const axisY = 118;
-  // bands
-  c.fillStyle='rgba(6,214,160,.22)'; c.fillRect(X(0.10),18,X(0.20)-X(0.10),axisY-18);
-  c.fillStyle='rgba(6,214,160,.10)';
-  for(let x=X(ivesLo); x<X(ivesHi); x+=7){ c.fillRect(x,18,3.5,axisY-18); }
+  // atmospheric regimes (indicative bands; see footer)
+  const zones=[[-9,0,'rgba(239,71,111,.10)','inferior mirage'],
+               [0.10,0.20,'rgba(6,214,160,.25)','normal'],
+               [0.20,0.35,'rgba(6,214,160,.13)','minor looming'],
+               [0.35,0.60,'rgba(6,214,160,.08)','major looming'],
+               [0.60,9,'rgba(142,202,230,.10)','duct / Fata Morgana']];
+  c.font='10.5px system-ui'; c.textAlign='center';
+  for(const [a,b,fill,label] of zones){
+    const x0=Math.max(X(a),12), x1=Math.min(X(b),W-12);
+    if(x1-x0<4) continue;
+    c.fillStyle=fill; c.fillRect(x0,18,x1-x0,axisY-18);
+    c.fillStyle = label==='inferior mirage' ? '#ef9db1' : (label==='duct / Fata Morgana' ? '#8ecae6' : '#06d6a0');
+    if(x1-x0>52) c.fillText(label,(x0+x1)/2,14);
+  }
+  if(kmax>1){ c.strokeStyle='#8ecae6'; c.setLineDash([3,3]); c.beginPath(); c.moveTo(X(1),18); c.lineTo(X(1),axisY); c.stroke(); c.setLineDash([]);
+    c.fillStyle='#8ecae6'; c.fillText('k = 1: light follows the surface', X(1), 26); }
   c.strokeStyle='#2b3a48'; c.beginPath(); c.moveTo(10,axisY); c.lineTo(W-10,axisY); c.stroke();
   // zero line
   if (kmin<0 && kmax>0){ c.strokeStyle='#3a4c5c'; c.beginPath(); c.moveTo(X(0),18); c.lineTo(X(0),axisY); c.stroke(); }
@@ -202,11 +223,6 @@ function draw(kG, kGlo, kGhi, kF, kFlo, kFhi, D){
     c.fillRect(X(k)-0.5,axisY,1,4); c.fillText(k.toFixed(1),X(k),axisY+16);
   }
   c.fillText('refraction coefficient k', W/2, axisY+30);
-  // band labels
-  c.fillStyle='#06d6a0'; c.textAlign='center'; c.font='11px system-ui';
-  c.fillText('normal marine 0.10–0.20', X(0.15), 14);
-  c.fillStyle='#8fe8c8';
-  c.fillText('Ives 1951 routine Gulf lifts (this distance)', (X(ivesLo)+X(ivesHi))/2, axisY-8);
   // markers
   function marker(k, lo, hi, y, col, label){
     if(!isFinite(k)) return;
@@ -264,6 +280,8 @@ function compute(){
   }
   draw(g&&!g.full?g.k:(g?g.k:NaN), typeof kGlo!=='undefined'?kGlo:NaN, typeof kGhi!=='undefined'?kGhi:NaN,
        f&&!f.full?f.k:NaN, typeof kFlo!=='undefined'?kFlo:NaN, typeof kFhi!=='undefined'?kFhi:NaN, D);
+  drawView('viewG','Eye view · globe','globe', h, D, H, v, g?g.k:NaN, 0.13);
+  drawView('viewF','Eye view · flat plane','flat', h, D, H, v, (f&&!f.full)?f.k:0, 0);
 }
 
 document.querySelectorAll('input').forEach(el=>el.addEventListener('input',compute));
@@ -278,6 +296,53 @@ document.getElementById('preset').addEventListener('click',()=>{
   for(const k in p) document.getElementById(k).value=p[k];
   compute();
 });
+
+function gridStep(H){ for(const s of [5,10,20,25,50,100,200]) if(H/s<=9) return s; return 500; }
+function drawView(id, title, mode, h, D, H, v, k, kStd){
+  const cv=document.getElementById(id), dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth, Hc=190; cv.width=W*dpr; cv.height=Hc*dpr;
+  const c=cv.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,W,Hc);
+  c.fillStyle='#10181f'; c.fillRect(0,0,W,Hc);
+  // apparent elevation angle of a point at height e, distance D, effective radius Re (rad)
+  const ReOf = kk => mode==='globe' ? R/(1-kk) : (kk<-1e-9 ? -R/kk : Infinity);
+  const ang = (e,Re) => (e-h)/D - (isFinite(Re) ? D/(2*Re) : 0);
+  const horiz = Re => isFinite(Re) ? -Math.sqrt(Math.max(0,2*h/Re)) : -0; // apparent sea-horizon angle
+  const Re=ReOf(k), ReS=ReOf(kStd);
+  const aTop=ang(H,Re), aHor=Math.min(horiz(Re), ang(0,Re));
+  const aHorS=Math.min(horiz(ReS), ang(0,ReS));
+  const lo=Math.min(aHor,aHorS)-(aTop-aHor)*0.12, hi=aTop+(aTop-aHor)*0.30;
+  const Y=a => 26 + (hi-a)/(hi-lo)*(Hc-44);
+  // target block: centered slab
+  const x0=W*0.28, x1=W*0.72;
+  const yBase=Y(ang(0,Re)), yTop=Y(aTop);
+  c.fillStyle='#6b5138'; c.fillRect(x0,yTop,x1-x0,Math.max(1,yBase-yTop));
+  // elevation grid lines across full width
+  const st=gridStep(H);
+  c.font='10px system-ui'; c.textAlign='left';
+  for(let e=0;e<=H+0.01;e+=st){
+    const y=Y(ang(e,Re));
+    c.strokeStyle='rgba(207,216,220,.22)'; c.beginPath(); c.moveTo(12,y); c.lineTo(W-12,y); c.stroke();
+    c.fillStyle='rgba(207,216,220,.55)'; c.fillText(e+' m',14,y-2);
+  }
+  // sea hides below solved horizon
+  const yH=Y(aHor);
+  c.fillStyle='rgba(21,90,134,.94)'; c.fillRect(0,yH,W,Hc-yH);
+  c.strokeStyle='#8ecae6'; c.lineWidth=2; c.beginPath(); c.moveTo(0,yH); c.lineTo(W,yH); c.stroke(); c.lineWidth=1;
+  // standard-air horizon, dashed
+  const yHS=Y(aHorS);
+  c.strokeStyle = mode==='globe' ? '#ffd166' : '#ef476f';
+  c.setLineDash([5,4]); c.beginPath(); c.moveTo(0,yHS); c.lineTo(W,yHS); c.stroke(); c.setLineDash([]);
+  c.font='10.5px system-ui'; c.textAlign='right';
+  c.fillStyle=c.strokeStyle;
+  c.fillText(mode==='globe' ? 'horizon in standard air (k = 0.13)' : 'straight light: nothing hidden', W-14, yHS-4);
+  // titles + captions
+  c.fillStyle='#cfd8dc'; c.font='600 12px system-ui'; c.textAlign='left';
+  c.fillText(title, 12, 14);
+  c.fillStyle='#8aa0ae'; c.font='10.5px system-ui';
+  const cap = isFinite(k) ? ('drawn at solved k = '+k.toFixed(2)+'  ·  visible '+v.toFixed(0)+' m of '+H.toFixed(0)+' m') : 'no solution';
+  c.fillText(cap, 12, Hc-6);
+}
+
 window.addEventListener('resize',compute);
 compute();
 </script>
