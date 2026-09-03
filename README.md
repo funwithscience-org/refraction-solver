@@ -44,6 +44,6 @@ a k range on both branches. Known limits are stated in the page footer:
 single-k is a whole-path average and cannot model layered ducts or the
 mirage skin in the last metre above the water.
 
-The preset loads the Isla Tortuga case (camera 0.15 m, 58.9 km, 228 m summit,
-86 ± 14 m visible) from the funwithscience.net analysis of a widely shared
-flat-earth video.
+The default values load the Isla Tortuga case (camera 0.15 m, 58.9 km,
+228 m summit, 86 ± 14 m visible) from the funwithscience.net analysis of a
+widely shared flat-earth video.
