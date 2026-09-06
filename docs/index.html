@@ -67,21 +67,12 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
 
   <div id="views" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px">
-      <canvas id="viewG" style="width:100%;height:190px;display:block"></canvas></div>
-    <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px">
       <canvas id="viewF" style="width:100%;height:190px;display:block"></canvas></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px">
+      <canvas id="viewG" style="width:100%;height:190px;display:block"></canvas></div>
   </div>
 
   <div class="ledgers">
-    <div class="ledger globe">
-      <h2>Globe · R = 6371 km</h2>
-      <div class="row"><span class="l">hidden height</span><span class="v num" id="g_hid">–</span></div>
-      <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="g_k">–</span></div>
-      <div class="row"><span class="l">k range from measurement ±</span><span class="v num" id="g_krange">–</span></div>
-      <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="g_dt">–</span></div>
-      <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="g_temp">–</span></div>
-      <div class="verdict" id="g_note">–</div>
-    </div>
     <div class="ledger flat">
       <h2>Flat plane</h2>
       <div class="row"><span class="l">hidden height to explain</span><span class="v num" id="f_hid">–</span></div>
@@ -90,6 +81,15 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
       <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="f_dt">–</span></div>
       <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="f_temp">–</span></div>
       <div class="verdict" id="f_note">–</div>
+    </div>
+    <div class="ledger globe">
+      <h2>Globe · R = 6371 km</h2>
+      <div class="row"><span class="l">hidden height</span><span class="v num" id="g_hid">–</span></div>
+      <div class="row"><span class="l">implied refraction k</span><span class="v big num" id="g_k">–</span></div>
+      <div class="row"><span class="l">k range from measurement ±</span><span class="v num" id="g_krange">–</span></div>
+      <div class="row"><span class="l">temperature gradient dT/dh</span><span class="v num" id="g_dt">–</span></div>
+      <div class="row"><span class="l">air at target-summit height</span><span class="v num" id="g_temp">–</span></div>
+      <div class="verdict" id="g_note">–</div>
     </div>
   </div>
 
