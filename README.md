@@ -37,7 +37,8 @@ the inverse direction, and borrows his k-to-temperature-gradient formulation.
 ## Notes
 
 Single self-contained HTML file (`docs/index.html`), no dependencies, no
-network calls. Below the scale, two eye-view panels draw the scene each model
+external calls except the site's Google Analytics page-view tag (same
+property as funwithscience.net). Below the scale, two eye-view panels draw the scene each model
 must produce — target slab, elevation grid lines, and the sea horizon at the
 solved k — with a dashed line marking that model's standard-air horizon. The "visible ±" field propagates measurement uncertainty into
 a k range on both branches. Known limits are stated in the page footer:
