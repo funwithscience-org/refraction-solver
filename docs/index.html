@@ -127,6 +127,21 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
     can always arc over and reach every point on the surface — standard refraction occludes nothing on a plane
     (at worst it folds grazing images, superior-mirage style). Hiding on a plane can only come from rays bending
     away from the surface.
+    <br><br>
+    <b>Sign and limits of k.</b> Light bends toward denser air; the pressure and temperature gradients compete and
+    cancel at the autoconvective lapse rate, ≈3.4 °C per 100 m
+    (<a href="https://glossary.ametsoc.org/wiki/Autoconvective_lapse_rate" style="color:#8ecae6">AMS Glossary of Meteorology</a>)
+    — the 0.0343 in the formula. Cooling steeper than that turns k negative (inferior mirage), but air in that state is
+    denser above than below — absolutely unstable — so it overturns and survives only as a thin forced layer against a
+    hot surface: measured and simulated inferior-mirage layers over water are ≈10–20 cm deep
+    (<a href="https://pubs.aip.org/aapt/ajp/article/91/12/999/2922148" style="color:#8ecae6">Am. J. Phys. 91, 999, 2023</a>),
+    and the zone they erase spans roughly an arcminute at the apparent horizon
+    (<a href="https://aty.sdsu.edu/mirages/mirsims/inf-mir/inf-mir.html" style="color:#8ecae6">Young, inferior-mirage simulations</a>)
+    — about 17 m at 60 km. Whole low islands can vanish this way for a camera held inside the layer, and reappear on
+    standing up. Inversions, by contrast, can be deep and stable, so large positive k (looming, ducts) is well
+    documented at sea, while a deep path-averaged negative k of the size a flat plane needs here has never been
+    observed — and cannot persist, because the required lapse is several times past the overturning threshold
+    through the full depth of the sightline.
     Temperature from k = 503·(P/T²)·(0.0343 + dT/dh) — Bislin's formulation; T in kelvin, P in millibars.
     This tool is inspired by, and runs in the opposite direction to, Walter Bislin's
     <a href="https://walter.bislins.ch/bloge/index.asp?page=Advanced+Earth+Curvature+Calculator" style="color:#8ecae6">Advanced Earth Curvature Calculator</a>
