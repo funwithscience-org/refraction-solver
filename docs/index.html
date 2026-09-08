@@ -85,6 +85,10 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
   <div id="presets" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center">
     <span style="color:var(--dim);font-size:12.5px">Load a case:</span>
   </div>
+  <div id="presetref" style="display:none;margin:-4px 0 12px">
+    <img id="presetimg" alt="" style="max-width:100%;max-height:200px;border:1px solid var(--line);border-radius:5px;display:block">
+    <div id="presetcredit" style="color:var(--dim);font-size:11px;margin-top:3px"></div>
+  </div>
   <div id="presetnote" style="display:none;color:var(--dim);font-size:12px;margin:-6px 0 12px;line-height:1.5"></div>
 
   <div id="verdict" style="background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5;display:none"></div>
@@ -249,18 +253,25 @@ function dTdh(k, Tc, P){ const T=Tc+273.15; return k/(K1*P/(T*T)) - G; }
 const FT=0.3048, MI=1609.344;
 const PRESETS={
  tortuga:{label:'Isla Tortuga video', h:0.15,d:58.9,t:228,v:86,pm:14,at:30,p:1013,
+  img:'img/tortuga-frame.jpg', credit:'Frame from the video under analysis (TikTok), reproduced for critical review',
   note:'His stated geometry (PeakFinder pin, GVP summit); visible height 86\u00b114 m from a DEM fit to a 69-frame stack of his own footage.'},
  milwaukee:{label:'Milwaukee from Muskegon', h:6.1,d:127,t:193,v:15,pm:10,at:15,p:1013,
+  img:'img/milwaukee-frame.jpg', credit:'Photo circulated by @geantechman8 (TikTok), reproduced for critical review',
   note:'The viral night photo: 20 ft observer, 79 mi across Lake Michigan, US Bank Center 193 m; light tips only. Cross-lake ducts here are photographed and documented.'},
  rampion_t1:{label:'Rampion turbine 1, as filmed', h:0.61,d:13.518,t:20,v:17.9,pm:0.6,at:14,p:1016,
+  img:'https://funwithscience.net/globe-deconstruction/rampion/assets/blackswan-turbines-labeled.jpg', credit:'The Black Swan\u2019s own annotated slide (YouTube), reproduced for critical review',
   note:'From a six-turbine pixel fit of the video\u2019s own slide, perspective removed by width-normalisation: hidden 2.1 m (1.5\u20132.7) at 8.4 mi. One k \u2248 0.65 fits both the yellow and the dark intertidal strip, whose fitted height (6.7 m) matches Worthing\u2019s spring tidal range.'},
  rampion_t6:{label:'Rampion turbine 6, as filmed', h:0.61,d:18.025,t:20,v:15.2,pm:0.8,at:14,p:1016,
+  img:'https://funwithscience.net/globe-deconstruction/rampion/assets/blackswan-bands-measured.jpg', credit:'The slide with both strips measured in piece-widths \u2014 funwithscience.net/globe-deconstruction/rampion/',
   note:'Same six-point fit: hidden 4.8 m (4.0\u20135.6) at 11.2 mi. The pair solving to one k is the consistency check; the far dark strip is a third of the near one where perspective alone predicts 0.75. The camera records a k \u2248 0.7 scene; the narration asserts a k \u2248 0.95 one \u2014 the difference is the mirage band it calls \u201cthe sea\u201d.'},
  chicago_timelapse:{label:'Chicago time-lapse (Nowicki)', h:59.3,d:90.8,t:442,v:252,pm:11,at:7,p:1013,
+  img:'https://funwithscience.net/globe-deconstruction/long-path-cases/img/fig-nowicki-frame.jpg', credit:'Nowicki frame, annotated \u2014 funwithscience.net/globe-deconstruction/long-path-cases/',
   note:'30 Apr 2015 from the Grand Mere dune crest (234.5 m, lake 176.7 m), 56.4 mi; frame 16 hides 190\u00b111 m of the skyline. Airless would hide 315 m, standard air 237 m. Sources: funwithscience.net/globe-deconstruction/long-path-cases/'},
  chicago_frame:{label:'Chicago, book p.111 frame', h:2,d:62.355,t:442,v:194,pm:15,at:12,p:1013,
+  img:'https://funwithscience.net/globe-deconstruction/long-path-cases/img/fig-p111-still.jpg', credit:'The p.111 still with the overlay\u2019s own lines \u2014 funwithscience.net/globe-deconstruction/long-path-cases/',
   note:'The Michigan City still: at most 233\u2013263 m hidden from a 2 m eye at 38.7 mi \u2014 slightly LESS hiding than even airless geometry predicts (258 m), i.e. mild ordinary refraction.'},
  pontchartrain:{label:'Lake Pontchartrain towers', h:2,d:24.27,t:23,v:0,pm:2,at:30,p:1013,
+  img:'https://funwithscience.net/globe-deconstruction/long-path-cases/img/fig-pontchartrain-frame.jpg', credit:'Pontchartrain clip frame, annotated \u2014 funwithscience.net/globe-deconstruction/long-path-cases/',
   note:'Book p.112 photo A (2017): the 23 m transmission towers fully hidden at 15.1 mi from \u22482 m \u2014 which is what ordinary air over a warm lake predicts. The flat plane must hide all 23 m: \u2248\u2212171 \u00b0C/km.'}
 };
 function applyPreset(id){
@@ -271,6 +282,12 @@ function applyPreset(id){
   for(const k in map) document.getElementById(map[k]).value=P[k];
   document.getElementById('presetnote').textContent=P.note;
   document.getElementById('presetnote').style.display='block';
+  const ref=document.getElementById('presetref');
+  if(P.img){ document.getElementById('presetimg').src=P.img;
+    document.getElementById('presetimg').alt='Reference image for '+P.label;
+    document.getElementById('presetcredit').textContent=P.credit||'';
+    ref.style.display='block';
+  } else ref.style.display='none';
   compute();
 }
 function stateToQuery(){
