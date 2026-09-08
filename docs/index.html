@@ -11,7 +11,14 @@
   gtag('js', new Date());
   gtag('config', 'G-QVD21HWH5X');
 </script>
-<title>Reverse Refraction Solver</title>
+<title>Reverse Refraction Solver — could you really see that far?</title>
+<meta name="description" content="Enter what a camera saw — observer height, distance, target height, visible height — and solve the atmospheric refraction a globe needs versus what a flat plane would need. Preloaded cases: Isla Tortuga, Milwaukee across Lake Michigan, the Rampion wind farm. Inverse companion to Walter Bislin's curvature calculator.">
+<link rel="canonical" href="https://funwithscience.net/refraction-solver/">
+<meta property="og:title" content="Reverse Refraction Solver">
+<meta property="og:description" content="A curvature calculator run backwards: from what was actually seen, solve the refraction each model of the Earth requires — with the temperature price tag.">
+<meta property="og:url" content="https://funwithscience.net/refraction-solver/">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0f141a">
 <style>
 :root{
   --bg:#0f141a; --panel:#16202b; --line:#2b3a48; --ink:#cfd8dc; --dim:#8aa0ae;
@@ -57,6 +64,10 @@ h1{font-size:21px;font-weight:600;letter-spacing:.2px;margin:0}
 .field button:focus-visible,.field input:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
 .envrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:end}
 .envrow .field{width:130px}
+#presets button{background:#1d2a36;border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:6px 12px;font:600 12.5px inherit;cursor:pointer}
+#presets button:hover{background:#263746}
+#presets button.copy{border-color:var(--sky);color:var(--sky);margin-left:auto}
+body.embed .note, body.embed .sub, body.embed #presets{display:none}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-left:12px;vertical-align:middle}
 .seg button{background:#10181f;border:0;color:var(--dim);font:600 12.5px inherit;padding:6px 12px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:#1d2a36;color:var(--gold)}
@@ -70,6 +81,13 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
 <div class="wrap">
   <h1>Reverse refraction solver</h1>
   <div class="sub">Enter what the camera saw. It solves what the air had to be doing — on a globe, and on a flat plane.</div>
+
+  <div id="presets" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center">
+    <span style="color:var(--dim);font-size:12.5px">Load a case:</span>
+  </div>
+  <div id="presetnote" style="display:none;color:var(--dim);font-size:12px;margin:-6px 0 12px;line-height:1.5"></div>
+
+  <div id="verdict" style="background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13.5px;line-height:1.5;display:none"></div>
 
   <div id="scale"><canvas id="kcanvas"></canvas></div>
 
@@ -128,6 +146,11 @@ select.unit{background:#10181f;border:0;color:var(--dim);font:12px inherit;paddi
   </div>
 
   <div class="note">
+    Built for the arguments that recur: can you really see the Chicago skyline across Lake Michigan, Milwaukee from
+    Muskegon, Corsica from Genoa, the Rampion wind farm's yellow turbine bases from a Sussex beach, or a distant island
+    from the waterline? Load a case above, or enter any sighting; share the link and it opens pre-solved.
+    To embed this solver in your own page, iframe this URL with <code>?embed=1</code>.
+    <br><br>
     <b>How it solves.</b> Hidden = target − visible. On the globe, k is found so that
     (D − √(2·R·h/(1−k)))² · (1−k)/2R equals the hidden height. On the flat plane, the same hiding must come
     entirely from ray curvature: the equal-hiding ray radius r gives k = −R/r (negative: light bending away from the surface).
@@ -224,6 +247,48 @@ function solveFlatK(h, D, hid){
 function dTdh(k, Tc, P){ const T=Tc+273.15; return k/(K1*P/(T*T)) - G; }
 
 const FT=0.3048, MI=1609.344;
+const PRESETS={
+ tortuga:{label:'Isla Tortuga video', h:0.15,d:58.9,t:228,v:86,pm:14,at:30,p:1013,
+  note:'His stated geometry (PeakFinder pin, GVP summit); visible height 86\u00b114 m from a DEM fit to a 69-frame stack of his own footage.'},
+ milwaukee:{label:'Milwaukee from Muskegon', h:6.1,d:127,t:193,v:15,pm:10,at:15,p:1013,
+  note:'The viral night photo: 20 ft observer, 79 mi across Lake Michigan, US Bank Center 193 m; light tips only. Cross-lake ducts here are photographed and documented.'},
+ rampion_far:{label:'Rampion turbine 6', h:1.07,d:18,t:20,v:7,pm:4,at:15,p:1016,
+  note:'Sussex coast, 3.5 ft observer, farthest turbine in the viral graphic; target is the 20 m yellow transition piece (platform 20 m above HAT, RWE spec). Visible \u22487 m as the bands appear in the image.'},
+ rampion_near:{label:'Rampion turbine 1', h:1.07,d:13.5,t:20,v:14,pm:3,at:15,p:1016,
+  note:'Same shot, nearest turbine (8.4 mi). Compare with turbine 6: the yellow bands shrink faster than distance alone \u2014 progressive hiding, with the manufacturer\u2019s 20 m ruler attached.'}
+};
+function applyPreset(id){
+  const P=PRESETS[id]; if(!P) return;
+  if(state.sys!=='metric') setSystem('metric');
+  document.getElementById('uD').value='km';
+  const map={h:'h',d:'D',t:'H',v:'v',pm:'u',at:'T',p:'P'};
+  for(const k in map) document.getElementById(map[k]).value=P[k];
+  document.getElementById('presetnote').textContent=P.note;
+  document.getElementById('presetnote').style.display='block';
+  compute();
+}
+function stateToQuery(){
+  const q=new URLSearchParams();
+  ['h','D','H','v','u','T','P'].forEach(id=>q.set(id.toLowerCase()==='h'&&id!=='H'?'h':({D:'d',H:'t',v:'v',u:'pm',T:'at',P:'p',h:'h'})[id], document.getElementById(id).value));
+  q.set('sys',state.sys); q.set('du',document.getElementById('uD').value);
+  return q.toString();
+}
+let urlTimer=null;
+function syncURL(){
+  clearTimeout(urlTimer);
+  urlTimer=setTimeout(()=>{ try{history.replaceState(null,'','?'+stateToQuery());}catch(e){} },400);
+}
+function loadFromURL(){
+  const q=new URLSearchParams(location.search);
+  if(q.get('embed')==='1') document.body.classList.add('embed');
+  if(q.get('case')&&PRESETS[q.get('case')]){ applyPreset(q.get('case')); return true; }
+  if(![...q.keys()].some(k=>['h','d','t','v'].includes(k))) return false;
+  if(q.get('sys')==='imperial') setSystem('imperial');
+  if(q.get('du')) document.getElementById('uD').value=q.get('du');
+  const map={h:'h',d:'D',t:'H',v:'v',pm:'u',at:'T',p:'P'};
+  for(const k in map) if(q.get(k)!==null&&q.get(k)!=='') document.getElementById(map[k]).value=q.get(k);
+  return true;
+}
 const state={sys:'metric'};
 const distOpts={metric:[['km',1000],['m',1]], imperial:[['mi',MI],['ft',FT]]};
 function lenF(){ return state.sys==='metric'?1:FT; }
@@ -347,6 +412,35 @@ function compute(){
       : 'Light must bend away from the surface, path-averaged, for the whole distance — with the air at target-summit height as shown. Compare against the measured bands above.');
     var kFm=kF, kFlo=fl&&!f.full?fl.k:NaN, kFhi=fh&&!f.full?fh.k:NaN;
   }
+  // plain-language verdict
+  (function(){
+    const V=document.getElementById('verdict'); if(!V) return;
+    if(!g||!f){ V.style.display='none'; return; }
+    function globeWord(k){
+      if(k<0) return 'inferior-mirage-side air (unusual \u2014 worth re-checking the inputs)';
+      if(k<0.10) return 'slightly drier-than-textbook but ordinary air (k \u2248 '+k.toFixed(2)+')';
+      if(k<=0.20) return 'completely ordinary sea air (k \u2248 '+k.toFixed(2)+')';
+      if(k<=0.35) return 'mild looming (k \u2248 '+k.toFixed(2)+') \u2014 a common calm-water condition';
+      if(k<=0.60) return 'strong looming (k \u2248 '+k.toFixed(2)+') \u2014 documented as routine in stratified waters';
+      if(k<=1.05) return 'a surface duct (k \u2248 '+k.toFixed(2)+') \u2014 the rare but photographed Fata Morgana regime';
+      return 'refraction beyond a closed duct (k \u2248 '+k.toFixed(2)+') \u2014 extraordinary; re-check the inputs';
+    }
+    let txt;
+    if(g.full&&f.full){
+      txt='<b>Verdict:</b> the target is fully visible \u2014 which a flat plane predicts always, and a globe predicts here for k \u2265 '+g.k.toFixed(2)+'. This observation alone does not separate the models; the discriminating test is whether visibility changes with observer height and with the weather.';
+    } else if(f.full){
+      txt='<b>Verdict:</b> nothing needs hiding \u2014 both models allow this view.';
+    } else {
+      const dtf=dTdh(f.k,Tc,P);
+      const mult=(dtf/-0.0343);
+      const depth=Math.max(50,Math.round(D/500/10)*10);
+      txt='<b>Verdict:</b> on a globe this view needs '+globeWord(g.k)+'. '+
+        'On a flat plane it needs light bending <i>away</i> from the surface at k \u2248 '+f.k.toFixed(2)+
+        ' \u2014 a temperature gradient about '+mult.toFixed(1)+'\u00d7 past the convective overturning limit, sustained through roughly the bottom '+depth+' m of atmosphere for all '+(D/1000).toFixed(0)+' km. Air in that state flips over in minutes; it has never been observed as a standing layer.';
+    }
+    V.innerHTML=txt; V.style.display='block';
+  })();
+  syncURL();
   draw(g&&!g.full?g.k:(g?g.k:NaN), typeof kGlo!=='undefined'?kGlo:NaN, typeof kGhi!=='undefined'?kGhi:NaN,
        f&&!f.full?f.k:NaN, typeof kFlo!=='undefined'?kFlo:NaN, typeof kFhi!=='undefined'?kFhi:NaN, D);
   drawView('viewG','Eye view · globe','globe', h, D, H, v, g?g.k:NaN, 0.13);
@@ -415,7 +509,22 @@ function drawView(id, title, mode, h, D, H, v, k, kStd){
   c.fillText(cap, 12, Hc-6);
 }
 
+(function(){
+  const P=document.getElementById('presets');
+  for(const id in PRESETS){
+    const b=document.createElement('button'); b.type='button'; b.textContent=PRESETS[id].label;
+    b.addEventListener('click',()=>{ applyPreset(id); try{history.replaceState(null,'','?case='+id);}catch(e){} });
+    P.appendChild(b);
+  }
+  const c=document.createElement('button'); c.type='button'; c.className='copy'; c.textContent='Copy link to this solve';
+  c.addEventListener('click',()=>{ try{history.replaceState(null,'','?'+stateToQuery());}catch(e){}
+    const url=location.origin+location.pathname+'?'+stateToQuery();
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url); c.textContent='Copied!'; setTimeout(()=>c.textContent='Copy link to this solve',1500);} else { prompt('Copy this link:',url); }
+  });
+  P.appendChild(c);
+})();
 window.addEventListener('resize',compute);
+loadFromURL();
 compute();
 </script>
 </body>

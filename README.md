@@ -34,6 +34,16 @@ Inspired by Walter Bislin's Advanced Earth Curvature Calculator
 the standard forward solver of the genre; this tool runs the same physics in
 the inverse direction, and borrows his k-to-temperature-gradient formulation.
 
+## Sharing, presets, embedding
+
+State is encoded in the URL (`?h=&d=&t=&v=&pm=&at=&p=&sys=&du=`), kept in
+sync as you type — copy the address bar or use the "Copy link to this
+solve" button and the link opens pre-solved. Named cases load with
+`?case=tortuga|milwaukee|rampion_far|rampion_near`. A plain-language
+verdict line translates both solved coefficients into what the atmosphere
+would actually have to do. Embed in another page with an iframe pointing
+at `?embed=1` (hides the prose chrome).
+
 ## Notes
 
 Single self-contained HTML file (`docs/index.html`), no dependencies, no
