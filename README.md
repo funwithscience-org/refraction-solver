@@ -39,7 +39,7 @@ the inverse direction, and borrows his k-to-temperature-gradient formulation.
 State is encoded in the URL (`?h=&d=&t=&v=&pm=&at=&p=&sys=&du=`), kept in
 sync as you type — copy the address bar or use the "Copy link to this
 solve" button and the link opens pre-solved. Named cases load with
-`?case=tortuga|milwaukee|rampion_claim|rampion_t1|rampion_t6|chicago_timelapse|chicago_frame|chicago_overlay|pontchartrain`. A plain-language
+`?case=tortuga|milwaukee|rampion_t1|rampion_t6|chicago_timelapse|chicago_frame|pontchartrain`. A plain-language
 verdict line translates both solved coefficients into what the atmosphere
 would actually have to do. Embed in another page with an iframe pointing
 at `?embed=1` (hides the prose chrome).
