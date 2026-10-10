@@ -416,7 +416,7 @@ function compute(){
     set('g_k', (g.full?'≥ ':'')+fmt(kG,3));
     set('g_krange', (gl&&gh)? fmt(gl.k,2)+' … '+fmt(gh.k,2) : '–');
     set('g_dt', fmt(dt,4)+' °C/m  ('+fmt(dt*0.54864,4)+' °F/ft)');
-    set('g_temp', fmt(Tc+dt*H,1)+' °C / '+fmt((Tc+dt*H)*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
+    set('g_temp', fmt(Tc+dt*(H-h),1)+' °C / '+fmt((Tc+dt*(H-h))*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
     set('g_note', g.full ? 'Target fully visible: any k at or above this leaves nothing hidden.'
       : (kG>=0.10&&kG<=0.20 ? 'Inside the normal marine band — ordinary air.'
       : (kG>0.20 ? 'Above the survey band — looming / inversion territory. Compare the Ives band for this distance.'
@@ -435,7 +435,7 @@ function compute(){
     set('f_k', f.full ? '0 (nothing to hide)' : fmt(kF,3));
     set('f_krange', (fl&&fh&&!f.full)? fmt(fl.k,2)+' … '+fmt(fh.k,2) : '–');
     set('f_dt', f.full ? '–' : fmt(dtf,4)+' °C/m  ('+fmt(dtf*0.54864,4)+' °F/ft)');
-    set('f_temp', f.full ? '–' : fmt(Tc+dtf*H,1)+' °C / '+fmt((Tc+dtf*H)*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
+    set('f_temp', f.full ? '–' : fmt(Tc+dtf*(H-h),1)+' °C / '+fmt((Tc+dtf*(H-h))*1.8+32,0)+' °F  (surface '+fmt(Tc,0)+' °C)');
     set('f_note', f.full ? 'A flat plane predicts the whole target visible — which is the claim being tested.'
       : 'Light must bend away from the surface, path-averaged, for the whole distance — with the air at target-summit height as shown. Compare against the measured bands above.');
     var kFm=kF, kFlo=fl&&!f.full?fl.k:NaN, kFhi=fh&&!f.full?fh.k:NaN;
